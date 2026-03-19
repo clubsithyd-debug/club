@@ -1,0 +1,123 @@
+// Schedule Data
+export const scheduleData = [
+  {
+    day: "Day 1",
+    date: "24th April 2026",
+    events: [
+      { time: "02:30 PM", title: "Entry Begins", location: "Main Gate" },
+      { time: "02:30 PM", title: "Registration & Reporting", location: "Front of SIT Building" },
+      { time: "05:00 PM", title: "Inauguration Ceremony", location: "Auditorium" },
+      { time: "06:45 PM", title: "Move to Venue & Settle", location: "Hack Labs" },
+      { time: "07:00 PM", title: "Hacking Begins", location: "Hack Labs", highlight: true },
+      { time: "09:00 PM", title: "Dinner", location: "Mess Hall" }
+    ]
+  },
+  {
+    day: "Day 2",
+    date: "25th April 2026",
+    events: [
+      { time: "00:00 AM", title: "Midnight Mentoring", location: "Online / Labs" },
+      { time: "08:00 AM", title: "Breakfast", location: "Mess Hall" },
+      { time: "12:00 PM", title: "Evaluation Round 1", location: "Hack Labs" },
+      { time: "01:00 PM", title: "Lunch", location: "Mess Hall" },
+      { time: "05:00 PM", title: "Mini-Games & Snacks", location: "Central Atrium" },
+      { time: "09:00 PM", title: "Dinner", location: "Mess Hall" }
+    ]
+  },
+  {
+    day: "Day 3",
+    date: "26th April 2026",
+    events: [
+      { time: "08:00 AM", title: "Breakfast", location: "Mess Hall" },
+      { time: "10:00 AM", title: "Hacking Ends", location: "Hack Labs", highlight: true },
+      { time: "11:00 AM", title: "Final Pitching Round", location: "Auditorium" },
+      { time: "02:00 PM", title: "Lunch", location: "Mess Hall" },
+      { time: "03:30 PM", title: "Prize Distribution & Closing", location: "Auditorium" }
+    ]
+  }
+];
+
+// Slate Members (Leadership)
+export const slateMembers = [
+  { name: "Md Zakiur Rahman", role: "Chairperson", initial: "Chair" },
+  { name: "Saanvi (Slate)", role: "Vice Chairperson", initial: "Vice" },
+  { name: "Diwyansh (Slate)", role: "Treasurer", initial: "Cash" },
+  { name: "Coming Soon", role: "Secretary", initial: "Notes" },
+  { name: "Coming Soon", role: "Content Developer", initial: "Create" },
+  { name: "Coming Soon", role: "Executive Member", initial: "Exec" },
+  { name: "Coming Soon", role: "Faculty In-Charge", initial: "Faculty" },
+];
+
+// Organizing Committee (from image)
+export const organizingCommittee = [
+  {
+    team: "Logistics",
+    members: [
+      { name: "Bhavya", role: "Lead" },
+      { name: "Chandrahaas", role: "Co-Lead" },
+      { name: "Prachi", role: "Member" },
+      { name: "Mokshita", role: "Member" },
+      { name: "Deepika", role: "Member" },
+      { name: "Mitali", role: "SPOC" }
+    ]
+  },
+  {
+    team: "PR & Design",
+    members: [
+      { name: "Saanvi (Slate)", role: "Lead" },
+      { name: "Diwyansh (Slate)", role: "Co-Lead" },
+      { name: "Anvi", role: "Member" },
+      { name: "Pramit", role: "Member" },
+      { name: "Sanvy", role: "Member" },
+      { name: "Vrishab", role: "Member" },
+      { name: "Arnav", role: "Member" },
+      { name: "Sujay", role: "Member" },
+      { name: "Aditya", role: "SPOC" }
+    ]
+  },
+  {
+    team: "Technical",
+    members: [
+      { name: "Meraj", role: "Lead", image: "/assets/main pfp.jpeg" },
+      { name: "Pramit", role: "Co-Lead" },
+      { name: "Narla", role: "Member" },
+      { name: "Vinay Reddy", role: "Member" },
+      { name: "Devender", role: "Member" },
+      { name: "Bhavya", role: "Member" },
+      { name: "Vrishab", role: "Member" },
+      { name: "Sanvy", role: "Member" },
+      { name: "Hari Vardhan", role: "SPOC" }
+    ]
+  },
+  {
+    team: "Sponsorship",
+    members: [
+      { name: "Sujay", role: "Lead" },
+      { name: "Gaurav", role: "Co-Lead" },
+      { name: "Ojasvi", role: "Member" },
+      { name: "Vivekananda", role: "Member" },
+      { name: "Nikhil", role: "Member" },
+      { name: "Namish", role: "Member" },
+      { name: "Meraj", role: "Member", image: "/assets/main pfp.jpeg" },
+      { name: "Zakiur", role: "SPOC" }
+    ]
+  }
+];
+
+export const sampleProblems = [
+    { sno:1,  id:'SH26-001', title:'Smart Campus Energy Monitor',        domain:'IoT & Embedded',     description:'Design a real-time energy monitoring system for college campuses using IoT sensors. The system should track consumption per floor/lab, generate alerts for anomalies, and provide a dashboard for facility managers to reduce wastage by at least 20%.' },
+    { sno:2,  id:'SH26-002', title:'AI-Based Attendance System',          domain:'AI / ML',             description:'Build a contactless, AI-powered attendance system using facial recognition that works in varying lighting conditions. Should handle 500+ students per session, integrate with existing ERPs, and flag proxy attempts in real time.' },
+    { sno:3,  id:'SH26-003', title:'Open Source Contribution Tracker',    domain:'Developer Tools',    description:'Create a GitHub-integrated dashboard that gamifies open source contributions for students. Track PRs, issues, code reviews, and streak data. Include leaderboards, badges, and club-level analytics.' },
+    { sno:4,  id:'SH26-004', title:'Mental Health Peer Support Bot',      domain:'HealthTech',         description:'Develop an anonymous, AI-driven peer support chatbot for students experiencing stress or burnout. Should detect crisis signals and escalate to human counsellors while maintaining strict data privacy compliance.' },
+    { sno:5,  id:'SH26-005', title:'Decentralised Voting Platform',       domain:'Blockchain',         description:'Build a tamper-proof digital voting platform using blockchain for college elections. Must support anonymous voting, real-time result tallying, audit trails, and be accessible on low-bandwidth mobile connections.' },
+    { sno:6,  id:'SH26-006', title:'Hyperlocal Food Waste Reducer',       domain:'Sustainability',     description:'Create a platform connecting college canteens with NGOs and hostels to redistribute surplus food in real time. Include predictive demand forecasting to reduce over-preparation and generate monthly impact reports.' },
+    { sno:7,  id:'SH26-007', title:'AR-Based Lab Safety Trainer',         domain:'AR / VR',            description:'Design an augmented reality module that trains students on lab safety protocols before they enter physical labs. Include interactive hazard simulations, quiz checkpoints, and compliance certificates on completion.' },
+    { sno:8,  id:'SH26-008', title:'Accessible Learning Platform',        domain:'EdTech',             description:'Build a learning management system specifically designed for students with visual, auditory, or motor disabilities. Must meet WCAG 2.1 AA standards, support screen readers, and provide AI-generated alt-text for all content.' },
+    { sno:9,  id:'SH26-009', title:'Campus Lost & Found Network',         domain:'Community Tech',     description:'Develop a geo-tagged lost and found platform for campus items with image recognition to match lost and found posts automatically. Include push notifications and a trust-based claim verification system.' },
+    { sno:10, id:'SH26-010', title:'Real-Time Plagiarism Shield',          domain:'Developer Tools',    description:'Create a plagiarism detection engine that compares submissions against the internet, past submissions, and peer work in real time. Should support code, reports, and presentations with an explainability layer for faculty.' },
+    { sno:11, id:'SH26-011', title:'Student Startup Matchmaking Engine',   domain:'AI / ML',            description:'Build an AI matchmaking system that connects student founders with co-founders, mentors, and investors based on skills, interests, and idea stage. Include a pitch deck builder and milestone tracker.' },
+    { sno:12, id:'SH26-012', title:'Smart Waste Segregation Bin',          domain:'IoT & Embedded',     description:'Design a smart bin with computer vision that auto-segregates waste into dry, wet, and e-waste categories. Log data to a cloud dashboard showing fill levels, segregation accuracy, and collection schedules.' },
+    { sno:13, id:'SH26-013', title:'Peer-to-Peer Skill Exchange',          domain:'Community Tech',     description:'Create a time-banking platform where students trade skills — e.g. web dev for guitar lessons. Include scheduling, session logging, rating systems, and a credit economy managed by the institution.' },
+    { sno:14, id:'SH26-014', title:'Supply Chain Transparency Tool',       domain:'Blockchain',         description:'Build a blockchain-backed tool for tracking the provenance of lab consumables and equipment purchases. Provide immutable audit logs, vendor rating systems, and automated red-flag alerts for procurement anomalies.' },
+    { sno:15, id:'SH26-015', title:'Carbon Footprint Calculator — Campus', domain:'Sustainability',     description:'Develop a tool that calculates the carbon footprint of a college campus by aggregating data from transport, electricity, water, and waste sources. Generate personalised reduction recommendations and a public transparency dashboard.' },
+];

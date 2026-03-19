@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ghbg: #010409;
+  --color-ghpanel: #0d1117;
+  --color-ghtext: #c9d1d9;
+  --color-ghmuted: #8b949e;
+  --color-ghgreen: #39d353;
+  --color-ghborder: #30363d;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+}
+
+@layer base {
+  html, body {
+    @apply bg-ghbg text-ghtext overflow-x-hidden m-0 p-0 w-full;
+  }
+  
+  *, *::before, *::after {
+    @apply cursor-auto;
+  }
+}
+
+@layer components {
+  .nav-link {
+    @apply text-ghtext no-underline relative transition-colors duration-300 font-semibold;
+  }
+  .nav-link:hover {
+    @apply text-ghgreen;
+  }
+  .nav-link::after {
+    content: "";
+    @apply absolute left-0 -bottom-1 w-0 h-0.5 bg-ghgreen transition-all duration-300 ease-in-out;
+  }
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  /* Event Cards */
+  .event-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+    @apply border border-ghborder transition-all duration-300;
+  }
+  .event-card:hover {
+    @apply border-ghgreen -translate-y-1 bg-[#161b22] shadow-[0_12px_32px_rgba(0,0,0,0.45)];
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-ghgreen text-black font-bold transition-transform duration-150 inline-block px-6 py-3 rounded-full hover:-translate-y-px hover:brightness-110;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent border border-ghgreen text-ghgreen font-bold transition-all duration-200 inline-block px-6 py-3 rounded-full hover:bg-ghgreen hover:text-black hover:-translate-y-px;
+  }
+
+  .interactive {
+    @apply cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(1, 4, 9, 0.95);
+    backdrop-filter: blur(10px);
+  }
+}
