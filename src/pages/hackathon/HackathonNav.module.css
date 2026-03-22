@@ -1,0 +1,125 @@
+.navShell {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #080808;
+  border-top: 3px solid #ffe900;
+  box-shadow: 0 -4px 20px rgba(255, 233, 0, 0.15);
+}
+
+.navWidth {
+  width: 100%;
+  max-width: 84rem;
+  margin: 0 auto;
+}
+
+.navBar {
+  position: relative;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #080808;
+}
+
+.navBar::-webkit-scrollbar {
+  display: none;
+}
+
+.navBar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #ffe900, #ff003c, #c0c0c0, #ffe900);
+  background-size: 200%;
+  animation: navLine 4s linear infinite;
+}
+
+@keyframes navLine {
+  from {
+    background-position: 0%;
+  }
+  to {
+    background-position: 200%;
+  }
+}
+
+.navItem {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 18px;
+  background: transparent;
+  color: #4a4232;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.15s ease, text-shadow 0.15s ease, border-top-color 0.15s ease;
+  border-top: 2px solid transparent;
+}
+
+.navItem::before {
+  content: '>';
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.navItem:hover {
+  color: #ffe900;
+  border-top-color: #ffe900;
+  text-shadow: 0 0 8px rgba(255, 233, 0, 0.5);
+}
+
+.navItem:hover::before {
+  opacity: 1;
+}
+
+.navItemActive {
+  background: #ffe900;
+  color: #080808;
+  font-family: 'Bebas Neue', cursive;
+  letter-spacing: 0.15em;
+  box-shadow: 0 0 16px rgba(255, 233, 0, 0.5), inset 0 -3px 0 #ff003c;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+
+.navItemActive::before {
+  opacity: 0;
+}
+
+.navLabel {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .navShell {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    border-top: 3px solid #ffe900;
+    border-bottom: none;
+  }
+
+  :global(.retro-hackathon-page) {
+    padding-bottom: 60px;
+  }
+
+  .nav {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    left: 0;
+    right: 0;
+    border-top: 3px solid #ffe900;
+    border-bottom: none;
+    box-shadow: 0 -4px 20px rgba(255, 233, 0, 0.2);
+  }
+}

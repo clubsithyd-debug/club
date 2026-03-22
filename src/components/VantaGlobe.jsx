@@ -8,11 +8,17 @@ export default function VantaGlobe() {
 
   useEffect(() => {
     if (!vantaEffect) {
-      setVantaEffect(
-        GLOBE({
-          el: myRef.current,
-          THREE: THREE,
-          mouseControls: true,
+      try {
+        if (!THREE.Geometry && !THREE.BufferGeometry) {
+             console.error("VantaGlobe: THREE.Geometry is missing. Skipping effect.");
+             return;
+        }
+
+        setVantaEffect(
+            GLOBE({
+            el: myRef.current,
+            THREE: THREE,
+            mouseControls: true,
           touchControls: true,
           gyroControls: false,
           minHeight: 200.00,
@@ -24,6 +30,9 @@ export default function VantaGlobe() {
           size: 0.80
         })
       );
+      } catch (error) {
+        console.error("VantaGlobe error:", error);
+      }
     }
     return () => {
       if (vantaEffect) vantaEffect.destroy();

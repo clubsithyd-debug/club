@@ -1,0 +1,65 @@
+.cpPage {
+  background: #080808 !important;
+  color: #D4C99A !important;
+  font-family: "Share Tech Mono", monospace !important;
+  min-height: 100vh;
+  position: relative;
+}
+.cpPage h1, .cpPage h2, .cpPage h3 {
+  font-family: "Bebas Neue", cursive !important;
+  color: #FFE900 !important;
+  text-shadow: 0 0 2px #FFE900, 0 0 20px rgba(255,233,0,0.4), 3px 3px 0 #FF003C !important;
+  letter-spacing: 0.04em !important;
+  background: none !important;
+  -webkit-text-fill-color: #FFE900 !important;
+}
+.cpPage p, .cpPage span, .cpPage td, .cpPage li { color: #4A4232 !important; }
+.cpPage [class*="bg-gh"], .cpPage [class*="bg-blue"], .cpPage [class*="bg-purple"] { background: transparent !important; }
+.cpPage [class*="border-gh"] { border-color: rgba(255,233,0,0.2) !important; }
+.cpPage [class*="rounded"] { border-radius: 0 !important; }
+.cpPage table { border-color: rgba(255,233,0,0.15) !important; }
+.cpPage th { color: #FFE900 !important; font-family: "Share Tech Mono", monospace !important; letter-spacing: 0.15em !important; border-bottom: 1px solid rgba(255,233,0,0.2) !important; background: #0C0A06 !important; }
+.cpPage td { border-bottom: 1px solid rgba(255,233,0,0.06) !important; }
+.cpPage tr:hover td { background: rgba(255,233,0,0.03) !important; }
+.cpPage button, .cpPage [class*="btn"] {
+  background: #FFE900 !important; color: #080808 !important;
+  font-family: "Bebas Neue", cursive !important;
+  border-radius: 0 !important; border: none !important;
+  clip-path: polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%) !important;
+  box-shadow: 0 0 16px rgba(255,233,0,0.3), 3px 3px 0 #FF003C !important;
+  letter-spacing: 0.15em !important; text-transform: uppercase !important;
+}
+.cpPage input, .cpPage select {
+  background: #0C0A06 !important; color: #FFE900 !important;
+  border: 1px solid rgba(255,233,0,0.25) !important;
+  border-radius: 0 !important; font-family: "Share Tech Mono", monospace !important;
+}
+.cpPage input::placeholder { color: #4A4232 !important; }
+.cpPage [class*="badge"], .cpPage [class*="tag"], .cpPage [class*="pill"] {
+  background: #0C0A06 !important; color: #FFE900 !important;
+  border: 1px solid rgba(255,233,0,0.3) !important;
+  border-radius: 0 !important; font-family: "Share Tech Mono", monospace !important;
+}
+.cpPage a { color: #FFE900 !important; }
+.cpPage a:hover { color: #FF003C !important; }
+.cpPage::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #FFE900 0px, #FFE900 20px, #080808 20px, #080808 40px);
+  z-index: 1000; pointer-events: none;
+}
+.cpPage::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,233,0,0.015) 3px, rgba(255,233,0,0.015) 4px);
+  pointer-events: none; z-index: 999;
+}
+
+.cpPage .outlineText {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  -moz-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  -webkit-text-stroke: 3px #FF003C !important;
+}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Link } from 'react-router-dom';
 import MatrixRain from '../components/MatrixRain';
-import VantaGlobe from '../components/VantaGlobe';
+// import VantaGlobe from '../components/VantaGlobe';
 import StatsCounter from '../components/StatsCounter';
 import FloatingIcons from '../components/FloatingIcons';
 import TerminalEasterEgg from '../components/TerminalEasterEgg';
@@ -27,7 +27,8 @@ export default function Home() {
 
       {/* HERO SECTION */}
       <section id="home" className="w-full min-h-[95vh] flex flex-col justify-center items-start py-12 px-6 md:px-16 lg:px-24 relative border-b border-ghborder/30 overflow-hidden">
-        <VantaGlobe />
+        {/* <VantaGlobe /> */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-transparent to-ghbg opacity-80 pointer-events-none" />
 
         <div className="w-full max-w-5xl relative z-10 text-left">
           <div className="max-w-4xl text-left">

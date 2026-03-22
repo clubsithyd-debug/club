@@ -1,749 +1,402 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, X, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { sampleProblems } from "../data/hackathonData";
 
-const CSV_PATH = '/assets/data/problems.csv';
+let globalMuted = false;
+function playShock() {
+  if (globalMuted) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime; const dur = 0.18;
+    const buf = ctx.createBuffer(1, ctx.sampleRate*dur, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.04));
+    const noise = ctx.createBufferSource(); noise.buffer=buf;
+    const bp = ctx.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=4000; bp.Q.value=0.8;
+    const hs = ctx.createBiquadFilter(); hs.type="highshelf"; hs.frequency.value=3000; hs.gain.value=14;
+    const gN = ctx.createGain(); gN.gain.setValueAtTime(1.4,now); gN.gain.exponentialRampToValueAtTime(0.001,now+dur);
+    noise.connect(bp); bp.connect(hs); hs.connect(gN); gN.connect(ctx.destination);
+    noise.start(now); noise.stop(now+dur);
+    [0,0.03,0.07].forEach(off=>{
+      const osc=ctx.createOscillator(); osc.type="sawtooth";
+      osc.frequency.setValueAtTime(180+Math.random()*120,now+off);
+      osc.frequency.exponentialRampToValueAtTime(40,now+off+0.06);
+      const gO=ctx.createGain(); gO.gain.setValueAtTime(0.5,now+off); gO.gain.exponentialRampToValueAtTime(0.001,now+off+0.06);
+      const ws=ctx.createWaveShaper(); const cv=new Float32Array(256);
+      for(let i=0;i<256;i++){const x=(i*2)/256-1; cv[i]=(Math.PI+400)*x/(Math.PI+400*Math.abs(x));}
+      ws.curve=cv; osc.connect(ws); ws.connect(gO); gO.connect(ctx.destination);
+      osc.start(now+off); osc.stop(now+off+0.07);
+    });
+    const thud=ctx.createOscillator(); thud.type="sine";
+    thud.frequency.setValueAtTime(80,now); thud.frequency.exponentialRampToValueAtTime(20,now+0.1);
+    const gT=ctx.createGain(); gT.gain.setValueAtTime(0.7,now); gT.gain.exponentialRampToValueAtTime(0.001,now+0.12);
+    thud.connect(gT); gT.connect(ctx.destination); thud.start(now); thud.stop(now+0.12);
+  } catch(e){}
+}
 
-export default function ProblemStatementTable({ onClose, isPage = false }) {
+const CSV_PATH = "/assets/data/problems.csv";
+
+const CP = {
+  bg:       "#080808",
+  bgCard:   "#0C0A06",
+  bgPanel:  "#0f0d08",
+  yellow:   "#FFE900",
+  yellowDim:"rgba(255,233,0,0.15)",
+  red:      "#FF003C",
+  chrome:   "#C0C0C0",
+  dim:      "#4A4232",
+  border:   "rgba(255,233,0,0.18)",
+  borderRed:"rgba(255,0,60,0.3)",
+};
+
+const S = {
+  page: { padding:"clamp(40px,6vw,80px) clamp(20px,5vw,60px)", position:"relative", zIndex:2 },
+  heroGrid: { display:"grid", gridTemplateColumns:"1fr auto", gap:"40px", alignItems:"end", marginBottom:"48px" },
+  kicker: { fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.3em", color:CP.red, textTransform:"uppercase", marginBottom:"12px" },
+  h1: { fontFamily:'"Bebas Neue",cursive', fontSize:"clamp(36px,6vw,80px)", color:CP.yellow, textShadow:`0 0 2px ${CP.yellow}, 0 0 20px rgba(255,233,0,0.4), 4px 4px 0 ${CP.red}`, letterSpacing:"0.04em", lineHeight:1, margin:"0 0 12px" },
+  desc: { fontFamily:'"Barlow Condensed",sans-serif', fontSize:"15px", color:CP.dim, lineHeight:1.7, maxWidth:"560px", borderLeft:`2px solid rgba(255,233,0,0.15)`, paddingLeft:"14px" },
+  statsRow: { display:"flex", gap:"1px", background:"rgba(255,233,0,0.06)" },
+  statBox: { padding:"20px 28px", background:CP.bgCard, borderTop:`3px solid ${CP.yellow}`, minWidth:"120px", textAlign:"center" },
+  statLabel: { fontFamily:'"Share Tech Mono",monospace', fontSize:"9px", letterSpacing:"0.2em", color:CP.dim, marginBottom:"8px", textTransform:"uppercase" },
+  statVal: { fontFamily:'"Bebas Neue",cursive', fontSize:"clamp(28px,4vw,44px)", color:CP.yellow, textShadow:`0 0 10px rgba(255,233,0,0.4), 2px 2px 0 ${CP.red}` },
+  panel: { background:CP.bgCard, border:`1px solid ${CP.border}`, borderTop:`3px solid ${CP.yellow}`, borderLeft:`3px solid ${CP.red}`, padding:"24px", marginBottom:"0", position:"relative", overflow:"hidden" },
+  filterGrid: { display:"grid", gridTemplateColumns:"1fr repeat(3, auto) auto", gap:"8px", marginBottom:"16px", alignItems:"stretch" },
+  filterBox: { background:CP.bg, border:`1px solid rgba(255,233,0,0.12)`, padding:"10px 14px", display:"flex", alignItems:"center", gap:"8px", fontFamily:'"Share Tech Mono",monospace', fontSize:"11px", color:CP.yellow },
+  filterLabel: { color:CP.dim, fontSize:"9px", letterSpacing:"0.15em", marginRight:"4px", whiteSpace:"nowrap" },
+  select: { background:"transparent", border:"none", color:CP.yellow, fontFamily:'"Share Tech Mono",monospace', fontSize:"11px", outline:"none", cursor:"crosshair", width:"100%" },
+  input: { background:"transparent", border:"none", color:CP.yellow, fontFamily:'"Share Tech Mono",monospace', fontSize:"11px", outline:"none", width:"100%", placeholder:CP.dim },
+  csvBtn: { background:CP.yellow, color:CP.bg, fontFamily:'"Bebas Neue",cursive', fontSize:"15px", letterSpacing:"0.15em", border:"none", padding:"10px 20px", cursor:"crosshair", clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)", boxShadow:`0 0 14px rgba(255,233,0,0.3), 2px 2px 0 ${CP.red}`, display:"flex", alignItems:"center", gap:"6px", whiteSpace:"nowrap" },
+  clearBtn: { background:"transparent", color:CP.dim, fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.15em", border:`1px solid rgba(255,233,0,0.15)`, padding:"10px 16px", cursor:"crosshair" },
+  statusRow: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px", flexWrap:"wrap", gap:"8px" },
+  chip: { display:"inline-flex", alignItems:"center", gap:"6px", fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.1em", color:CP.yellow, border:`1px solid rgba(255,233,0,0.2)`, padding:"4px 12px", background:"rgba(255,233,0,0.04)" },
+  pageChip: { fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.15em", color:CP.dim, border:`1px solid rgba(255,233,0,0.1)`, padding:"6px 14px", background:CP.bgCard },
+  table: { width:"100%", borderCollapse:"collapse" },
+  th: { fontFamily:'"Share Tech Mono",monospace', fontSize:"9px", letterSpacing:"0.2em", color:CP.dim, textTransform:"uppercase", padding:"10px 14px", textAlign:"left", borderBottom:`1px solid rgba(255,233,0,0.1)`, background:CP.bg },
+  td: { padding:"12px 14px", borderBottom:`1px solid rgba(255,233,0,0.06)`, verticalAlign:"top" },
+  idCell: { fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.15em", color:CP.yellow },
+  titleCell: { fontFamily:'"Barlow Condensed",sans-serif', fontSize:"15px", fontWeight:600, color:"#D4C99A" },
+  badge: { display:"inline-block", fontFamily:'"Share Tech Mono",monospace', fontSize:"9px", letterSpacing:"0.15em", textTransform:"uppercase", color:CP.red, border:`1px solid rgba(255,0,60,0.3)`, padding:"3px 8px", background:"rgba(255,0,60,0.06)", whiteSpace:"nowrap" },
+  descCell: { fontFamily:'"Barlow Condensed",sans-serif', fontSize:"13px", color:CP.dim, lineHeight:1.6, maxWidth:"360px" },
+  actionBtn: { background:CP.bgCard, border:`1px solid rgba(255,233,0,0.15)`, color:CP.yellow, padding:"6px 10px", cursor:"crosshair", fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.1em", display:"inline-flex", alignItems:"center", gap:"4px", transition:"all 0.15s" },
+  mobileCard: { background:CP.bgCard, border:`1px solid rgba(255,233,0,0.1)`, borderLeft:`3px solid ${CP.red}`, padding:"16px", marginBottom:"8px" },
+  paginationBtn: { background:CP.bgCard, border:`1px solid rgba(255,233,0,0.15)`, color:CP.yellow, padding:"8px 14px", cursor:"crosshair", fontFamily:'"Share Tech Mono",monospace', fontSize:"12px" },
+  modal: { position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.88)", padding:"16px" },
+  modalBox: { background:CP.bgCard, border:`1px solid rgba(255,233,0,0.2)`, borderTop:`3px solid ${CP.yellow}`, borderLeft:`3px solid ${CP.red}`, maxWidth:"760px", width:"100%", maxHeight:"88vh", overflowY:"auto", padding:"clamp(20px,4vw,40px)", position:"relative" },
+};
+
+function parseCSVLine(line) {
+  const values = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"' && inQuotes && line[i+1] === '"') { current += '"'; i++; continue; }
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === "," && !inQuotes) { values.push(current.trim()); current = ""; continue; }
+    current += ch;
+  }
+  values.push(current.trim());
+  return values;
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if (lines.length < 2) throw new Error("CSV must include a header and at least one row.");
+  const headerRow = parseCSVLine(lines[0]).map(h=>h.toLowerCase());
+  const indexOf = (c) => headerRow.findIndex(h=>c.includes(h));
+  const snoIndex = indexOf(["sno","s.no","serial","serial number","#"]);
+  const idIndex = indexOf(["id","statement id","problem id","problem statement id"]);
+  const titleIndex = indexOf(["title","problem title","problem name"]);
+  const domainIndex = indexOf(["domain","track","category","domain/track"]);
+  const descriptionIndex = indexOf(["description","desc","problem statement","details"]);
+  if (titleIndex === -1) throw new Error("Could not find a title column in the CSV.");
+  return lines.slice(1).map((line,i) => {
+    const v = parseCSVLine(line);
+    return { sno: Number(v[snoIndex])||i+1, id: v[idIndex]||`SH26-${String(i+1).padStart(3,"0")}`, title: v[titleIndex]||"Untitled problem", domain: v[domainIndex]||"General", description: v[descriptionIndex]||"Description coming soon." };
+  });
+}
+
+function downloadProblemText(problem) {
+  const content = ["SymbiHackathon 2026 Problem Statement","".padEnd(40,"="),`S.No: ${problem.sno}`,`Statement ID: ${problem.id}`,`Title: ${problem.title}`,`Domain: ${problem.domain}`,"",problem.description].join("\n");
+  const blob = new Blob([content],{type:"text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=`${problem.id}.txt`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function downloadCsv(rows) {
+  if(!rows.length) return;
+  const header = ["S.No","Statement ID","Title","Domain","Description"];
+  const csvRows = rows.map(r=>[r.sno,r.id,`"${r.title.replace(/"/g,'""')}"`,`"${r.domain.replace(/"/g,'""')}"`,`"${r.description.replace(/"/g,'""')}"`].join(","));
+  const blob = new Blob([[header.join(","),...csvRows].join("\n")],{type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="symbihackathon_problems.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+export default function ProblemStatementTable({ onClose, isPage=false }) {
   const [allData, setAllData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [domainFilter, setDomainFilter] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [warning, setWarning] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [domainFilter, setDomainFilter] = useState("");
+  const [sortKey, setSortKey] = useState("sno");
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [rowsPerPage, setRowsPerPage] = useState(8);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedProblem, setSelectedProblem] = useState(null);
-
-  // ── CSV Parser ────────────────────────────────────────────────────
-  const parseCSV = (text) => {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row.');
-
-    // Parse header — normalise to lowercase, trim
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-
-    // Map flexible column names
-    const col = name => {
-        const aliases = {
-            sno:         ['sno','s.no','s no','serial','serial no','serial number','#'],
-            id:          ['id','statement id','problem id','ps id','psid','statement_id','problem statement id'],
-            title:       ['title','problem title','name','problem name','statement title','problem statement title'],
-            domain:      ['domain','track','category','domain/track','domain bucket'],
-            description: ['description','desc','details','problem description','problem statement'],
-        };
-        for (const [key, list] of Object.entries(aliases)) {
-            if (list.includes(name)) return key;
-        }
-        return null;
+  const [hoverRow, setHoverRow] = useState(null);
+  useEffect(() => {
+    const unlock = () => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
     };
-
-    const colMap = {};
-    headers.forEach((h, i) => { const k = col(h); if (k) colMap[k] = i; });
-
-    const required = ['title'];
-    for (const r of required) {
-        if (colMap[r] === undefined) throw new Error(`Missing required column: "${r}". Found: ${headers.join(', ')}`);
-    }
-
-    // Parse rows — handle quoted fields
-    const parseRow = line => {
-        const fields = [];
-        let cur = '', inQuote = false;
-        for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (ch === '"') { inQuote = !inQuote; }
-            else if (ch === ',' && !inQuote) { fields.push(cur.trim()); cur = ''; }
-            else { cur += ch; }
-        }
-        fields.push(cur.trim());
-        return fields;
+    document.addEventListener("mousedown", unlock);
+    document.addEventListener("mousemove", unlock);
+    document.addEventListener("keydown", unlock);
+    return () => {
+      document.removeEventListener("mousedown", unlock);
+      document.removeEventListener("mousemove", unlock);
+      document.removeEventListener("keydown", unlock);
     };
+  }, []);
 
-    return lines.slice(1).filter(l => l.trim()).map((line, idx) => {
-        const f = parseRow(line);
-        const get = key => colMap[key] !== undefined ? (f[colMap[key]] || '').replace(/^"|"$/g, '').trim() : '';
-        return {
-            sno:         colMap.sno !== undefined ? parseInt(get('sno')) || (idx + 1) : idx + 1,
-            id:          get('id')          || `PS-${String(idx + 1).padStart(3,'0')}`,
-            title:       get('title'),
-            domain:      get('domain')      || 'General',
-            description: get('description') || '—',
-        };
-    });
-  };
-
-  // ── Auto Load CSV ─────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
         const res = await fetch(CSV_PATH);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        const data = parseCSV(text);
-        if (data.length === 0) throw new Error('CSV has no data rows.');
-        setAllData(data);
-        setError(null);
-      } catch (e) {
-        console.error("Failed to load CSV", e);
-        setError(`Could not load ${CSV_PATH} — ${e.message}`);
-      } finally {
-        setLoading(false);
-      }
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const parsed = parseCSV(await res.text());
+        if(!parsed.length) throw new Error("Empty CSV");
+        setAllData(parsed);
+      } catch {
+        setAllData(sampleProblems);
+        setWarning("// FALLBACK DATA LOADED");
+      } finally { setLoading(false); }
     }
     load();
   }, []);
 
-  // ── Derived Data ──────────────────────────────────────────────────
-  const domains = useMemo(() => {
-    return [...new Set(allData.map(r => r.domain))].sort();
-  }, [allData]);
+  const domains = useMemo(()=>[...new Set(allData.map(r=>r.domain))].sort(),[allData]);
 
-  const filteredData = useMemo(() => {
-    let res = [...allData];
+  const filteredData = useMemo(()=>{
+    const q = searchTerm.trim().toLowerCase();
+    const filtered = allData.filter(r=>{
+      const matchD = domainFilter ? r.domain===domainFilter : true;
+      const matchQ = q ? [r.id,r.title,r.domain,r.description,r.sno].some(v=>String(v).toLowerCase().includes(q)) : true;
+      return matchD && matchQ;
+    });
+    filtered.sort((a,b)=>{
+      if(sortKey==="sno") return sortDirection==="asc" ? Number(a.sno)-Number(b.sno) : Number(b.sno)-Number(a.sno);
+      return sortDirection==="asc" ? String(a[sortKey]).localeCompare(String(b[sortKey])) : String(b[sortKey]).localeCompare(String(a[sortKey]));
+    });
+    return filtered;
+  },[allData,domainFilter,searchTerm,sortDirection,sortKey]);
 
-    // Filter
-    if (domainFilter) {
-      res = res.filter(r => r.domain === domainFilter);
-    }
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      res = res.filter(r => 
-        [r.title, r.id, r.domain, r.description, String(r.sno)]
-        .some(v => String(v).toLowerCase().includes(q))
-      );
-    }
+  const totalPages = Math.max(1,Math.ceil(filteredData.length/rowsPerPage));
+  useEffect(()=>setCurrentPage(1),[searchTerm,domainFilter,sortKey,sortDirection,rowsPerPage]);
+  useEffect(()=>{ if(currentPage>totalPages) setCurrentPage(totalPages); },[currentPage,totalPages]);
 
-    // Sort
-    if (sortConfig.key) {
-      res.sort((a, b) => {
-        let av = a[sortConfig.key] ?? '', bv = b[sortConfig.key] ?? '';
-        
-        if (sortConfig.key === 'sno') {
-           // Ensure numeric sort for sno
-           return sortConfig.direction === 'asc' ? av - bv : bv - av;
-        }
+  const displayedData = useMemo(()=>{
+    const start=(currentPage-1)*rowsPerPage;
+    return filteredData.slice(start,start+rowsPerPage);
+  },[currentPage,filteredData,rowsPerPage]);
 
-        if (av < bv) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (av > bv) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
+  const rangeStart = filteredData.length===0 ? 0 : (currentPage-1)*rowsPerPage+1;
+  const rangeEnd = Math.min(currentPage*rowsPerPage,filteredData.length);
 
-    return res;
-  }, [allData, domainFilter, searchTerm, sortConfig]);
-
-  // Pagination Logic
-  const totalItems = filteredData.length;
-  const isAllRows = rowsPerPage === 'all';
-  const totalPages = isAllRows ? 1 : Math.ceil(totalItems / rowsPerPage);
-  
-  // reset page on filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, domainFilter, rowsPerPage]);
-
-  const displayedData = useMemo(() => {
-    if (isAllRows) return filteredData;
-    const start = (currentPage - 1) * rowsPerPage;
-    return filteredData.slice(start, start + rowsPerPage);
-  }, [filteredData, currentPage, rowsPerPage, isAllRows]);
-
-  // Use this to display range
-  const rangeStart = isAllRows ? 1 : (currentPage - 1) * rowsPerPage + 1;
-  const rangeEnd = isAllRows ? totalItems : Math.min(currentPage * rowsPerPage, totalItems);
-
-  // ── Handlers ──────────────────────────────────────────────────────
-  const handleSort = (key) => {
-    setSortConfig(current => ({
-      key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
-
-  const handleDownloadRow = (row) => {
-    const content = [
-        `SymbiHackathon 2026 — Problem Statement`,
-        `${'='.repeat(50)}`,
-        `S.No:        ${row.sno}`,
-        `Statement ID: ${row.id}`,
-        `Title:        ${row.title}`,
-        `Domain/Track: ${row.domain}`,
-        ``,
-        `Description:`,
-        row.description,
-        ``,
-        `${'='.repeat(50)}`,
-        `GitHub Club · SIT Hyderabad`,
-    ].join('\n');
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${row.id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownloadCSV = () => {
-    if (filteredData.length === 0) return;
-    const header = 'S.No,Statement ID,Title,Domain/Track,Description';
-    const rows = filteredData.map(r =>
-        [r.sno, `"${r.id}"`, `"${r.title.replace(/"/g,'""')}"`,
-         `"${r.domain.replace(/"/g,'""')}"`,
-         `"${r.description.replace(/"/g,'""')}"`].join(',')
-    );
-    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'symbihackathon2026_problems.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // ── Render ────────────────────────────────────────────────────────
-  if (isPage) {
-    return (
-      <div className="w-full min-h-screen bg-[#0d1117] text-white pt-24 pb-12 px-4 md:px-12 lg:px-24 flex flex-col">
-          <div className="mb-8 font-mono">
-              <div className="text-[#8b949e] opacity-70 mb-1 text-sm tracking-widest uppercase">SymbiHackathon 2026</div>
-              <h1 className="text-3xl md:text-5xl font-bold text-[#39d353] mb-4">~/problem-statements</h1>
-              <div className={`flex items-center gap-2 text-xs md:text-sm font-bold ${loading ? 'text-yellow-500' : error ? 'text-red-500' : 'text-[#39d353]'}`}>
-                   {loading && <><div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"/> <span>Loading data...</span></>}
-                   {error && <><AlertTriangle size={14} /> <span>{error}</span></>}
-                   {!loading && !error && <><CheckCircle size={14} /> <span>Loaded {allData.length} problem statements.</span></>}
-              </div>
-          </div>
-
-          <div className="flex-1 border border-[#30363d] rounded-xl bg-[#0d1117] shadow-2xl flex flex-col overflow-hidden relative">
-             {/* Controls Bar */}
-             <div className="p-4 bg-[#0d1117] border-b border-[#30363d] flex flex-col md:flex-row gap-4">
-               {/* Search */}
-               <div className="flex-1 relative group">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8b949e] group-focus-within:text-[#39d353] transition-colors" />
-                  <input 
-                     type="text" 
-                     placeholder="Search by title, ID, domain..." 
-                     value={searchTerm}
-                     onChange={e => setSearchTerm(e.target.value)}
-                     className="w-full bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-10 pr-4 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none focus:ring-1 focus:ring-[#39d353]/20 transition-all placeholder-[#8b949e]"
-                  />
-               </div>
-
-               {/* Filters */}
-               <div className="flex gap-3 overflow-x-auto pb-1 md:pb-0">
-                  <div className="relative min-w-[140px]">
-                     <select 
-                        value={sortConfig.key ? `${sortConfig.key}-${sortConfig.direction}` : ''}
-                        onChange={e => {
-                            const [k, d] = e.target.value.split('-');
-                            if (k) { setSortConfig({ key: k, direction: d }); }
-                            else { setSortConfig({ key: null, direction: 'asc' }); }
-                        }}
-                        className="w-full appearance-none bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none cursor-pointer"
-                     >
-                        <option value="">Sort by ...</option>
-                        <option value="sno-asc">S.No (Asc)</option>
-                        <option value="sno-desc">S.No (Desc)</option>
-                        <option value="id-asc">ID (Asc)</option>
-                        <option value="id-desc">ID (Desc)</option>
-                        <option value="title-asc">Title (A-Z)</option>
-                        <option value="title-desc">Title (Z-A)</option>
-                     </select>
-                     <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#8b949e] pointer-events-none" />
-                  </div>
-
-                  <div className="relative min-w-[160px]">
-                     <select 
-                        value={domainFilter}
-                        onChange={e => setDomainFilter(e.target.value)}
-                        className="w-full appearance-none bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none cursor-pointer"
-                     >
-                        <option value="">All Domains</option>
-                        {domains.map(d => <option key={d} value={d}>{d}</option>)}
-                     </select>
-                     <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#8b949e] pointer-events-none" />
-                  </div>
-
-                  <div className="relative min-w-[110px]">
-                     <select 
-                        value={rowsPerPage}
-                        onChange={e => setRowsPerPage(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                        className="w-full appearance-none bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none cursor-pointer"
-                     >
-                        <option value={10}>10 per page</option>
-                        <option value={20}>20 per page</option>
-                        <option value={50}>50 per page</option>
-                        <option value="all">Check All</option>
-                     </select>
-                     <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#8b949e] rotate-90 pointer-events-none" />
-                  </div>
-
-                  <button 
-                    onClick={handleDownloadCSV}
-                    className="px-4 py-2 bg-[#238636] border border-[#238636] hover:bg-[#2ea043] text-white rounded-lg flex items-center gap-2 text-sm font-bold transition-all whitespace-nowrap shadow-[0_0_10px_rgba(35,134,54,0.4)]"
-                  >
-                      <Download className="w-4 h-4" /> Download CSV
-                  </button>
-               </div>
-             </div>
-
-             {/* Stats Bar */}
-            {!loading && (
-               <div className="px-6 py-3 border-b border-[#30363d] text-xs font-mono text-[#8b949e] bg-[#161b22]">
-                 Showing {totalItems > 0 ? rangeStart : 0}-{rangeEnd} of {totalItems} problem statements
-                 <span className="float-right">Page {currentPage} of {totalPages}</span>
-               </div>
-            )}
-
-            {/* Table Area */}
-            <div className="flex-1 overflow-auto bg-[#0d1117] relative">
-               {loading ? (
-                 <div className="absolute inset-0 flex flex-col items-center justify-center text-[#8b949e] gap-4">
-                   <div className="w-8 h-8 border-2 border-[#39d353] border-t-transparent rounded-full animate-spin"></div>
-                   <p className="font-mono text-sm">Parsing problem statements...</p>
-                 </div>
-               ) : filteredData.length === 0 ? (
-                 <div className="p-12 text-center text-[#8b949e] flex flex-col items-center gap-4">
-                    <Search className="w-12 h-12 opacity-20" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">No results found</h3>
-                      <p>Try adjusting your search or filters.</p>
-                    </div>
-                    <button onClick={() => {setSearchTerm(''); setDomainFilter('');}} className="text-[#39d353] hover:underline text-sm">
-                      Clear Filters
-                    </button>
-                 </div>
-               ) : (
-                 <table className="w-full text-left text-sm border-collapse">
-                   <thead className="bg-[#161b22] text-[#8b949e] font-semibold sticky top-0 z-10 shadow-sm">
-                     <tr>
-                       {[
-                         { k: 'sno', l: 'S.No', w: 'w-16' },
-                         { k: 'id', l: 'Statement ID', w: 'w-32' },
-                         { k: 'title', l: 'Title', w: 'w-auto' },
-                         { k: 'domain', l: 'Domain / Track', w: 'w-40' },
-                       ].map(({k, l, w}) => (
-                         <th 
-                           key={k} 
-                           className={`p-4 border-b border-[#30363d] cursor-pointer hover:text-white transition-colors select-none ${w}`}
-                           onClick={() => handleSort(k)}
-                         >
-                           <div className="flex items-center gap-2 uppercase tracking-wider text-[10px] font-mono">
-                             {l}
-                             {sortConfig.key === k ? (
-                               sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-[#39d353]" /> : <ArrowDown className="w-3 h-3 text-[#39d353]" />
-                             ) : (
-                               <ArrowUpDown className="w-3 h-3 opacity-30 group-hover:opacity-100" />
-                             )}
-                           </div>
-                         </th>
-                       ))}
-                       <th className="p-4 border-b border-[#30363d] uppercase tracking-wider text-[10px] font-mono w-1/3">Description</th>
-                       <th className="p-4 border-b border-[#30363d] uppercase tracking-wider text-[10px] font-mono text-center w-24">Download</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-[#30363d]">
-                      {displayedData.map((row) => (
-                         <tr key={row.sno} className="hover:bg-[#161b22] transition-colors group">
-                            <td className="p-4 font-mono text-[#8b949e] text-xs border-r border-[#30363d]/30">{row.sno}</td>
-                            <td className="p-4 font-mono text-white font-bold text-xs border-r border-[#30363d]/30">{row.id}</td>
-                            <td className="p-4 font-semibold text-[#c9d1d9] text-[13px] border-r border-[#30363d]/30">
-                              {row.title}
-                            </td>
-                            <td className="p-4 border-r border-[#30363d]/30">
-                               <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border border-[#39d353]/30 bg-[#39d353]/10 text-[#39d353] whitespace-nowrap">
-                                  {row.domain}
-                               </span>
-                            </td>
-                            <td className="p-4 text-[#8b949e] text-xs leading-relaxed border-r border-[#30363d]/30">
-                               <div className="line-clamp-2 mb-1">{row.description}</div>
-                               <button 
-                                 onClick={() => setSelectedProblem(row)}
-                                 className="text-[#39d353] text-[10px] font-mono hover:underline hover:text-[#39d353] flex items-center gap-1 mt-1"
-                               >
-                                 read more <ArrowUp className="w-2 h-2 rotate-90" />
-                               </button>
-                            </td>
-                            <td className="p-4 text-center">
-                               <button 
-                                  onClick={() => handleDownloadRow(row)}
-                                  className="w-8 h-8 inline-flex items-center justify-center rounded bg-[#238636]/10 border border-[#238636]/50 text-[#39d353] hover:bg-[#238636] hover:text-white transition-all shadow-sm group-hover:shadow-[0_0_10px_rgba(57,211,83,0.2)]"
-                                  title={`Download ${row.id}`}
-                               >
-                                  <Download className="w-3.5 h-3.5" />
-                               </button>
-                            </td>
-                         </tr>
-                      ))}
-                   </tbody>
-                 </table>
-               )}
+  const content = (
+    <div style={S.page}>
+      {isPage && (
+        <div style={{ marginBottom:"48px" }}>
+          <div style={S.heroGrid}>
+            <div>
+              <p style={S.kicker}>// MISSION ARCHIVE &nbsp; ?</p>
+              <h1 style={S.h1}>Problem Statements</h1>
+              <p style={S.desc}>Browse the challenge bank. Filter by track, search by keyword, download individual statements or the full archive as CSV.</p>
             </div>
-            
-            {/* Pagination Footer */}
-            {!loading && (
-               <div className="p-4 bg-[#161b22] border-t border-[#30363d] flex justify-between items-center">
-                    <div className="text-xs font-mono text-[#8b949e]">
-                         Showing {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, totalItems)} of {totalItems}
-                    </div>
-                   <div className="flex gap-2">
-                      <button 
-                        onClick={() => setCurrentPage(1)} 
-                        disabled={currentPage === 1}
-                        className="p-2 rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      >
-                         <ChevronsLeft className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                        disabled={currentPage === 1}
-                        className="p-2 rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      >
-                         <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      
-                       <span className="flex items-center px-2 text-xs font-mono text-[#8b949e]">
-                         Page {currentPage} / {totalPages}
-                       </span>
-
-                      <button 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-                        disabled={currentPage === totalPages}
-                        className="p-2 rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      >
-                         <ChevronRight className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => setCurrentPage(totalPages)} 
-                        disabled={currentPage === totalPages}
-                        className="p-2 rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      >
-                         <ChevronsRight className="w-4 h-4" />
-                      </button>
-                   </div>
-               </div>
-            )}
-
-            {/* View Modal logic (same for both view modes) */}
-            {selectedProblem && (
-              <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                 <div className="bg-[#0d1117] w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl border border-[#30363d] shadow-2xl overflow-hidden relative">
-                    <button onClick={() => setSelectedProblem(null)} className="absolute top-4 right-4 p-2 rounded-lg hover:bg-[#30363d] text-[#8b949e] hover:text-[#f85149] transition-colors z-10">
-                          <X className="w-5 h-5" />
-                    </button>
-                    <div className="p-8 overflow-y-auto custom-scrollbar">
-                        <div className="flex items-center gap-3 mb-6">
-                           <span className="font-mono text-[#39d353] font-bold text-lg border-b border-[#39d353]/30 pb-0.5">{selectedProblem.id}</span>
-                           <span className="w-1 h-1 bg-[#8b949e] rounded-full"></span>
-                           <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold font-mono border border-[#39d353]/30 bg-[#39d353]/10 text-[#39d353]">
-                              {selectedProblem.domain}
-                           </span>
-                        </div>
-                        
-                        <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 leading-tight">{selectedProblem.title}</h2>
-                        
-                        <div className="space-y-6 text-[#c9d1d9] leading-loose text-[15px]">
-                            {/* Assuming description might have newlines */}
-                           {selectedProblem.description.split('\n').map((line, i) => (
-                              <p key={i}>{line}</p>
-                           ))}
-                        </div>
-                    </div>
-                    <div className="p-6 bg-[#161b22] border-t border-[#30363d] flex justify-end gap-3 shrink-0">
-                       <button 
-                          onClick={() => setSelectedProblem(null)}
-                          className="px-6 py-2 rounded-lg border border-[#30363d] text-[#c9d1d9] font-semibold hover:bg-[#30363d] transition-colors text-sm"
-                       >
-                         Close
-                       </button>
-                       <button 
-                          onClick={() => handleDownloadRow(selectedProblem)}
-                          className="px-6 py-2 rounded-lg bg-[#238636] text-white font-bold hover:bg-[#2eaa49] transition-all text-sm flex items-center gap-2 shadow-lg shadow-green-900/20"
-                       >
-                         <Download className="w-4 h-4" /> Download Statement
-                       </button>
-                    </div>
-                 </div>
+            <div style={S.statsRow}>
+              <div style={S.statBox}>
+                <div style={S.statLabel}>// PROBLEMS</div>
+                <div style={S.statVal}>{allData.length}</div>
               </div>
-            )}
-            
+              <div style={{...S.statBox, borderTopColor:CP.red}}>
+                <div style={S.statLabel}>// TRACKS</div>
+                <div style={{...S.statVal, color:CP.red, textShadow:`0 0 10px rgba(255,0,60,0.4), 2px 2px 0 ${CP.yellow}`}}>{domains.length}</div>
+              </div>
+              <div style={{...S.statBox, borderTopColor:CP.chrome}}>
+                <div style={S.statLabel}>// VISIBLE</div>
+                <div style={{...S.statVal, color:CP.chrome, textShadow:"none"}}>{displayedData.length}</div>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      <div style={S.panel}>
+        <div style={{ position:"absolute", inset:0, background:"repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(255,233,0,0.012) 18px,rgba(255,233,0,0.012) 19px)", pointerEvents:"none" }}/>
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr auto auto auto auto", gap:"6px", marginBottom:"14px", position:"relative", zIndex:2, flexWrap:"wrap" }}>
+          <div style={S.filterBox}>
+            <span style={{ color:CP.red, fontSize:"10px" }}>&#9656;</span>
+            <span style={S.filterLabel}>SEARCH:</span>
+            <input style={S.input} type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="title, ID, domain, keyword..." />
+          </div>
+          <div style={S.filterBox}>
+            <span style={S.filterLabel}>TRACK:</span>
+            <select style={S.select} value={domainFilter} onChange={e=>{setDomainFilter(e.target.value);playShock();}}>
+              <option value="">ALL</option>
+              {domains.map(d=><option key={d} value={d} style={{ background:CP.bg }}>{d}</option>)}
+            </select>
+          </div>
+          <div style={S.filterBox}>
+            <span style={S.filterLabel}>SORT:</span>
+            <select style={S.select} value={`${sortKey}:${sortDirection}`} onChange={e=>{ const [k,d]=e.target.value.split(":"); setSortKey(k); setSortDirection(d); }}>
+              <option value="sno:asc" style={{ background:CP.bg }}>S.No ASC</option>
+              <option value="sno:desc" style={{ background:CP.bg }}>S.No DESC</option>
+              <option value="id:asc" style={{ background:CP.bg }}>ID ASC</option>
+              <option value="title:asc" style={{ background:CP.bg }}>TITLE A-Z</option>
+              <option value="title:desc" style={{ background:CP.bg }}>TITLE Z-A</option>
+              <option value="domain:asc" style={{ background:CP.bg }}>TRACK A-Z</option>
+            </select>
+          </div>
+          <div style={S.filterBox}>
+            <span style={S.filterLabel}>PER PAGE:</span>
+            <select style={S.select} value={rowsPerPage} onChange={e=>{setRowsPerPage(Number(e.target.value));playShock();}}>
+              <option value={8} style={{ background:CP.bg }}>8</option>
+              <option value={12} style={{ background:CP.bg }}>12</option>
+              <option value={16} style={{ background:CP.bg }}>16</option>
+            </select>
+          </div>
+          <div style={{ display:"flex", gap:"6px" }}>
+            <button style={S.csvBtn} onClick={()=>{downloadCsv(filteredData);playShock();}}>&#8595; CSV</button>
+            {(searchTerm||domainFilter) && <button style={S.clearBtn} onClick={()=>{ setSearchTerm(""); setDomainFilter(""); }}>CLR</button>}
+          </div>
+        </div>
+
+        <div style={{ ...S.statusRow, position:"relative", zIndex:2 }}>
+          <div style={S.chip}>? SHOWING {rangeStart}�{rangeEnd} OF {filteredData.length}</div>
+          {warning && <div style={{ ...S.chip, color:CP.red, borderColor:CP.borderRed }}>{warning}</div>}
+          <div style={S.pageChip}>PAGE {currentPage} / {totalPages}</div>
+        </div>
+
+        <div style={{ position:"relative", zIndex:2 }}>
+          {loading ? (
+            <div style={{ minHeight:"300px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"16px" }}>
+              <div style={{ width:"32px", height:"32px", border:`2px solid ${CP.yellow}`, borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
+              <p style={{ fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", letterSpacing:"0.2em", color:CP.dim }}>// PARSING ARCHIVE...</p>
+            </div>
+          ) : filteredData.length === 0 ? (
+            <div style={{ minHeight:"300px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"12px" }}>
+              <p style={{ fontFamily:'"Bebas Neue",cursive', fontSize:"32px", color:CP.yellow }}>NO RESULTS</p>
+              <p style={{ fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", color:CP.dim, letterSpacing:"0.15em" }}>// TRY A DIFFERENT QUERY OR RESET FILTERS</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ display:"none" }} className="cp-mobile-cards">
+                {displayedData.map(p=>(
+                  <div key={p.id} style={S.mobileCard}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"10px" }}>
+                      <span style={S.idCell}>{p.id}</span>
+                      <span style={S.badge}>{p.domain}</span>
+                    </div>
+                    <p style={{ ...S.titleCell, marginBottom:"8px" }}>{p.title}</p>
+                    <p style={{ ...S.descCell, marginBottom:"12px" }}>{p.description.slice(0,160)}{p.description.length>160?"...":""}</p>
+                    <div style={{ display:"flex", gap:"8px" }}>
+                      <button style={S.actionBtn} onClick={()=>setSelectedProblem(p)}>&#9654; VIEW</button>
+                      <button style={{ ...S.actionBtn, color:CP.dim }} onClick={()=>downloadProblemText(p)}>&#8595; SAVE</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ overflowX:"auto" }}>
+                <table style={S.table}>
+                  <thead>
+                    <tr>
+                      {["S.NO","STATEMENT ID","TITLE","TRACK","DESCRIPTION","ACTIONS"].map(h=>(
+                        <th key={h} style={S.th}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedData.map((p,i)=>(
+                      <tr key={p.id}
+                        onMouseEnter={()=>{setHoverRow(p.id);setTimeout(playShock,50);}}
+                        onMouseLeave={()=>setHoverRow(null)}
+                        style={{ background: hoverRow===p.id ? "rgba(255,233,0,0.03)" : i%2===0 ? CP.bg : "rgba(255,233,0,0.01)", transition:"background 0.15s" }}
+                      >
+                        <td style={{ ...S.td, fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", color:CP.dim }}>{p.sno}</td>
+                        <td style={{ ...S.td, ...S.idCell }}>{p.id}</td>
+                        <td style={{ ...S.td, ...S.titleCell }}>{p.title}</td>
+                        <td style={S.td}><span style={S.badge}>{p.domain}</span></td>
+                        <td style={{ ...S.td, ...S.descCell }}>{p.description.slice(0,140)}{p.description.length>140?"...":""}</td>
+                        <td style={S.td}>
+                          <div style={{ display:"flex", gap:"6px" }}>
+                            <button style={S.actionBtn} onClick={()=>setSelectedProblem(p)} title="View">&#9654;</button>
+                            <button style={{ ...S.actionBtn, color:CP.dim }} onClick={()=>downloadProblemText(p)} title="Download">&#8595;</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+
+        {!loading && filteredData.length>0 && (
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:"20px", paddingTop:"16px", borderTop:`1px solid rgba(255,233,0,0.08)`, position:"relative", zIndex:2, flexWrap:"wrap", gap:"12px" }}>
+            <p style={{ fontFamily:'"Share Tech Mono",monospace', fontSize:"10px", color:CP.dim, letterSpacing:"0.1em" }}>// USE SEARCH + FILTERS BEFORE DOWNLOADING</p>
+            <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+              <button style={{ ...S.paginationBtn, opacity: currentPage===1 ? 0.3 : 1 }} onClick={()=>setCurrentPage(p=>Math.max(1,p-1))} disabled={currentPage===1}>&#8592;</button>
+              <div style={S.pageChip}>{currentPage} / {totalPages}</div>
+              <button style={{ ...S.paginationBtn, opacity: currentPage===totalPages ? 0.3 : 1 }} onClick={()=>setCurrentPage(p=>Math.min(totalPages,p+1))} disabled={currentPage===totalPages}>&#8594;</button>
+            </div>
+          </div>
+        )}
       </div>
-    );
-  }
+
+      {selectedProblem && (
+        <div style={S.modal} onClick={()=>setSelectedProblem(null)}>
+          <div style={S.modalBox} onClick={e=>e.stopPropagation()}>
+            <button onClick={()=>setSelectedProblem(null)} style={{ position:"absolute", top:"16px", right:"16px", background:"transparent", border:`1px solid rgba(255,233,0,0.2)`, color:CP.yellow, padding:"6px 10px", cursor:"crosshair", fontFamily:'"Share Tech Mono",monospace', fontSize:"12px" }}>&#10005;</button>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", marginBottom:"20px" }}>
+              <span style={{ ...S.idCell, border:`1px solid rgba(255,233,0,0.3)`, padding:"4px 12px", background:"rgba(255,233,0,0.06)" }}>{selectedProblem.id}</span>
+              <span style={S.badge}>{selectedProblem.domain}</span>
+            </div>
+            <h2 style={{ ...S.h1, fontSize:"clamp(24px,4vw,48px)", marginBottom:"16px" }}>{selectedProblem.title}</h2>
+            <p style={{ fontFamily:'"Barlow Condensed",sans-serif', fontSize:"16px", color:"#A09070", lineHeight:1.8, marginBottom:"28px" }}>{selectedProblem.description}</p>
+            <div style={{ display:"flex", gap:"12px", flexWrap:"wrap" }}>
+              <button style={S.csvBtn} onClick={()=>downloadProblemText(selectedProblem)}>&#8595; DOWNLOAD STATEMENT</button>
+              <button style={S.clearBtn} onClick={()=>setSelectedProblem(null)}>CLOSE PANEL</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+          .cp-mobile-cards { display: block !important; }
+          table { display: none; }
+        }
+      `}</style>
+    </div>
+  );
+
+  if(isPage) return content;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#010409] bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-0 md:p-6 overflow-hidden">
-      <div className="bg-[#0d1117] w-full h-full md:h-[90vh] md:max-w-7xl md:rounded-2xl border border-[#30363d] flex flex-col shadow-2xl relative">
-        
-        {/* Header */}
-        <div className="p-4 md:p-6 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-3">
-              <span className="text-[#39d353]">~/problem-statements</span>
-            </h2>
-            {/* CSV Status Bar */}
-            <div className={`flex items-center gap-2 mt-2 text-xs font-mono ${loading ? 'text-yellow-500' : error ? 'text-red-500' : 'text-[#39d353]'}`}>
-               {loading && <span>Loading data...</span>}
-               {error && <><AlertTriangle size={14} /> <span>{error}</span></>}
-               {!loading && !error && <><CheckCircle size={14} /> <span>Loaded {allData.length} problem statements.</span></>}
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Controls Bar */}
-        <div className="p-4 bg-[#0d1117] border-b border-[#30363d] flex flex-col md:flex-row gap-4">
-           {/* Search */}
-           <div className="flex-1 relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8b949e] group-focus-within:text-[#39d353] transition-colors" />
-              <input 
-                 type="text" 
-                 placeholder="Search by title, ID, domain..." 
-                 value={searchTerm}
-                 onChange={e => setSearchTerm(e.target.value)}
-                 className="w-full bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-10 pr-4 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none focus:ring-1 focus:ring-[#39d353]/20 transition-all placeholder-[#8b949e]"
-              />
-           </div>
-
-           {/* Filters */}
-           <div className="flex gap-3 overflow-x-auto pb-1 md:pb-0">
-              <div className="relative min-w-[160px]">
-                 <select 
-                    value={sortConfig.key ? `${sortConfig.key}-${sortConfig.direction}` : ''}
-                    onChange={e => {
-                        const [k, d] = e.target.value.split('-');
-                        if (k) { setSortConfig({ key: k, direction: d }); }
-                        else { setSortConfig({ key: null, direction: 'asc' }); }
-                    }}
-                    className="w-full appearance-none bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none cursor-pointer"
-                 >
-                    <option value="">Sort by ...</option>
-                    <option value="sno-asc">S.No (Asc)</option>
-                    <option value="sno-desc">S.No (Desc)</option>
-                    <option value="id-asc">ID (Asc)</option>
-                    <option value="id-desc">ID (Desc)</option>
-                    <option value="title-asc">Title (A-Z)</option>
-                    <option value="title-desc">Title (Z-A)</option>
-                 </select>
-                 <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#8b949e] pointer-events-none" />
-              </div>
-
-              <div className="relative min-w-[200px]">
-                 <select 
-                    value={domainFilter}
-                    onChange={e => setDomainFilter(e.target.value)}
-                    className="w-full appearance-none bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none cursor-pointer"
-                 >
-                    <option value="">All Domains</option>
-                    {domains.map(d => <option key={d} value={d}>{d}</option>)}
-                 </select>
-                 <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#8b949e] pointer-events-none" />
-              </div>
-
-              <div className="relative min-w-[120px]">
-                 <select 
-                    value={rowsPerPage}
-                    onChange={e => setRowsPerPage(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className="w-full appearance-none bg-[#161b22] border border-[#30363d] rounded-lg py-2.5 pl-4 pr-10 text-white text-sm font-mono focus:border-[#39d353] focus:outline-none cursor-pointer"
-                 >
-                    <option value={10}>Show 10</option>
-                    <option value={20}>Show 20</option>
-                    <option value={50}>Show 50</option>
-                    <option value="all">Show All</option>
-                 </select>
-                 <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#8b949e] rotate-90 pointer-events-none" />
-              </div>
-
-              <button 
-                onClick={handleDownloadCSV}
-                className="px-4 py-2 bg-[#238636]/10 border border-[#238636]/30 hover:bg-[#238636]/20 text-[#39d353] rounded-lg flex items-center gap-2 text-sm font-semibold transition-all whitespace-nowrap"
-              >
-                  <Download className="w-4 h-4" /> CSV
-              </button>
-           </div>
-        </div>
-
-        {/* Stats Bar */}
-        {!loading && (
-           <div className="px-6 py-3 border-b border-[#30363d] text-xs font-mono text-[#8b949e] bg-[#0d1117]">
-             Showing {totalItems > 0 ? rangeStart : 0}-{rangeEnd} of {totalItems} problem statements
-           </div>
-        )}
-
-        {/* Table Area */}
-        <div className="flex-1 overflow-auto bg-[#0d1117] relative">
-           {loading ? (
-             <div className="absolute inset-0 flex flex-col items-center justify-center text-[#8b949e] gap-4">
-               <div className="w-8 h-8 border-2 border-[#39d353] border-t-transparent rounded-full animate-spin"></div>
-               <p className="font-mono text-sm">Parsing problem statements...</p>
-             </div>
-           ) : filteredData.length === 0 ? (
-             <div className="flex flex-col items-center justify-center h-64 text-[#8b949e] gap-4">
-               <Search className="w-12 h-12 opacity-20" />
-               <p className="font-mono">No problem statements match your search.</p>
-               <button onClick={() => {setSearchTerm(''); setDomainFilter('');}} className="text-[#39d353] hover:underline text-sm font-mono">Clear Filters</button>
-             </div>
-           ) : (
-             <table className="w-full text-left text-sm border-collapse">
-               <thead className="sticky top-0 z-10 bg-[#161b22] shadow-[0_1px_0_#30363d]">
-                 <tr>
-                    {[
-                      { id: 'sno', label: 'S.NO', width: 'w-16' },
-                      { id: 'id', label: 'STATEMENT ID', width: 'w-32' },
-                      { id: 'title', label: 'TITLE', width: '' },
-                      { id: 'domain', label: 'DOMAIN / TRACK', width: 'w-48' },
-                      { id: '', label: 'DESCRIPTION', width: 'w-96' },
-                      { id: '', label: 'DOWNLOAD', width: 'w-24 text-center' }
-                    ].map((col, idx) => (
-                      <th 
-                        key={idx}
-                        className={`p-4 text-xs font-bold text-[#8b949e] font-mono tracking-wider border-b border-[#30363d] ${col.width} ${col.id && sortConfig.key === col.id ? 'text-[#39d353]' : ''} ${col.id ? 'cursor-pointer hover:text-[#c9d1d9] transition-colors' : ''}`}
-                        onClick={() => col.id && handleSort(col.id)}
-                      >
-                         <div className={`flex items-center gap-1 ${col.label === 'DOWNLOAD' ? 'justify-center' : ''}`}>
-                            {col.label}
-                            {col.id && sortConfig.key === col.id && (
-                               <span className="text-[10px]">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                            )}
-                         </div>
-                      </th>
-                    ))}
-                 </tr>
-               </thead>
-               <tbody className="divide-y divide-[#30363d]">
-                  {displayedData.map((row) => (
-                     <tr key={row.sno} className="hover:bg-[#39d353]/5 transition-colors group">
-                        <td className="p-4 font-mono text-[#8b949e] text-xs">{row.sno}</td>
-                        <td className="p-4 font-mono text-[#39d353] font-semibold text-xs">{row.id}</td>
-                        <td className="p-4 font-semibold text-[#c9d1d9]">{row.title}</td>
-                        <td className="p-4">
-                           <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold font-mono border border-[#39d353]/30 bg-[#39d353]/10 text-[#39d353] whitespace-nowrap">
-                              {row.domain}
-                           </span>
-                        </td>
-                        <td className="p-4 text-[#8b949e] text-sm hidden md:table-cell">
-                           <div className="line-clamp-2 mb-1">{row.description}</div>
-                           <button 
-                             onClick={() => setSelectedProblem(row)}
-                             className="text-[#39d353] text-xs font-mono hover:underline hover:text-[#39d353]/80"
-                           >
-                             read more →
-                           </button>
-                        </td>
-                        <td className="p-4 text-center">
-                           <button 
-                              onClick={() => handleDownloadRow(row)}
-                              className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-[#39d353]/10 border border-[#39d353]/20 text-[#39d353] hover:bg-[#39d353]/20 hover:border-[#39d353] hover:shadow-[0_0_10px_rgba(57,211,83,0.3)] transition-all"
-                              title={`Download ${row.id}`}
-                           >
-                              <Download className="w-4 h-4" />
-                           </button>
-                        </td>
-                     </tr>
-                  ))}
-               </tbody>
-             </table>
-           )}
-        </div>
-
-        {/* Footer / Pagination */}
-        {!loading && (
-           <div className="p-4 bg-[#161b22] border-t border-[#30363d] flex justify-center sticky bottom-0 z-20">
-               <div className="flex gap-2">
-                  <button 
-                    onClick={() => setCurrentPage(1)} 
-                    disabled={currentPage === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                     <ChevronsLeft className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                    disabled={currentPage === 1}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                     <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  <div className="flex items-center gap-1 px-2">
-                     <span className="text-xs font-mono text-[#8b949e]">Page {currentPage} of {totalPages}</span>
-                  </div>
-
-                  <button 
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-                    disabled={currentPage === totalPages}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                     <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => setCurrentPage(totalPages)} 
-                    disabled={currentPage === totalPages}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#39d353] hover:text-[#39d353] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                     <ChevronsRight className="w-4 h-4" />
-                  </button>
-               </div>
-           </div>
-        )}
-
-        {/* --- View Modal --- */}
-        {selectedProblem && (
-          <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-             <div 
-               className="bg-[#0d1117] w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border border-[#30363d] shadow-[0_30px_80px_rgba(0,0,0,0.8)] overflow-hidden"
-             >
-                {/* Modal Header */}
-                <div className="p-6 border-b border-[#30363d] flex justify-between items-start bg-[#161b22]">
-                   <div>
-                      <div className="text-[#39d353] font-mono text-sm font-bold mb-1">{selectedProblem.id}</div>
-                      <h3 className="text-2xl font-bold text-white">{selectedProblem.title}</h3>
-                      <div className="mt-3">
-                         <span className="inline-block px-3 py-1 bg-[#39d353]/10 border border-[#39d353]/30 text-[#39d353] rounded-full text-xs font-mono font-bold">
-                            {selectedProblem.domain}
-                         </span>
-                      </div>
-                   </div>
-                   <button onClick={() => setSelectedProblem(null)} className="p-2 -mr-2 rounded-lg hover:bg-[#30363d] text-[#8b949e] hover:text-[#f85149] transition-colors">
-                      <X className="w-6 h-6" />
-                   </button>
-                </div>
-
-                {/* Modal Body */}
-                <div className="p-8 overflow-y-auto flex-1 text-[#c9d1d9] leading-loose text-base">
-                   {selectedProblem.description}
-                </div>
-
-                {/* Modal Footer */}
-                <div className="p-6 border-t border-[#30363d] bg-[#161b22] flex justify-end gap-3">
-                   <button 
-                      onClick={() => setSelectedProblem(null)}
-                      className="px-5 py-2 rounded-lg border border-[#30363d] text-[#c9d1d9] font-semibold hover:bg-[#30363d] transition-colors"
-                   >
-                     Close
-                   </button>
-                   <button 
-                      onClick={() => handleDownloadRow(selectedProblem)}
-                      className="px-5 py-2 rounded-lg bg-[#39d353] text-black font-bold hover:brightness-110 transition-transform hover:-translate-y-0.5 flex items-center gap-2"
-                   >
-                     <Download className="w-4 h-4" /> Download Statement
-                   </button>
-                </div>
-             </div>
-          </div>
-        )}
-
+    <div style={S.modal} onClick={onClose}>
+      <div style={{ ...S.modalBox, maxWidth:"1200px", maxHeight:"90vh" }} onClick={e=>e.stopPropagation()}>
+        <button onClick={onClose} style={{ position:"absolute", top:"16px", right:"16px", background:"transparent", border:`1px solid rgba(255,233,0,0.2)`, color:CP.yellow, padding:"6px 10px", cursor:"crosshair", fontFamily:'"Share Tech Mono",monospace', fontSize:"12px" }}>&#10005;</button>
+        {content}
       </div>
     </div>
   );
