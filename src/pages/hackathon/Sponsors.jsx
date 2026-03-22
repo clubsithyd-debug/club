@@ -646,7 +646,7 @@ export default function Sponsors() {
                         >
                           {Object.keys(TIER_COLORS).map(t=><option key={t} value={t} style={{background:C.card}}>{t} TIER</option>)}
                         </select>
-                        <button type="submit" style={{background:C.yellow,color:C.bg,fontFamily:'"Bebas Neue",cursive',fontSize:17,letterSpacing:".2em",padding:"13px 24px",border:"none",cursor:"pointer",marginTop:4,clipPath:"polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%)"}}>
+                        <button type="submit" className="glitch-btn" data-text="SEND PARTNERSHIP REQUEST" style={{background:C.yellow,color:C.bg,fontFamily:'"Bebas Neue",cursive',fontSize:17,letterSpacing:".2em",padding:"13px 24px",border:"none",cursor:"pointer",marginTop:4,clipPath:"polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%)"}}>
                           SEND PARTNERSHIP REQUEST
                         </button>
                       </form>

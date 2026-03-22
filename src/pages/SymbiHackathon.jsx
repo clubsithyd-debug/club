@@ -111,7 +111,7 @@ export default function SymbiHackathon() {
     }
 
     const counters = document.querySelectorAll("."+styles.statValue);
-    const targets = [500, 100000, 48];
+    const targets = [500, 100000, 24];
     const suffixes = ["+", "Rs", "H"];
     counters.forEach((el,i) => {
       let cur = 0;
@@ -186,11 +186,52 @@ export default function SymbiHackathon() {
     };
   }, []);
 
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js";
+    script.onload = () => {
+      const scene = document.getElementById("cp-parallax-scene");
+      if(scene && window.Parallax){
+        new window.Parallax(scene, {
+          relativeInput:true, clipRelativeInput:true,
+          calibrateX:true, calibrateY:true,
+          invertX:false, invertY:false,
+          limitX:25, limitY:15,
+          scalarX:4, scalarY:4,
+          frictionX:0.08, frictionY:0.08,
+        });
+      }
+    };
+    document.head.appendChild(script);
+    return () => { if(script.parentNode) script.parentNode.removeChild(script); };
+  }, []);
+
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet"/>
-      <div className={styles.wrap}>
-        <div className={styles.hero}>
+      <div className={styles.wrap} style={{position:"relative",zIndex:2}}>
+        <div style={{position:"fixed",inset:0,zIndex:0,overflow:"hidden",pointerEvents:"none"}}>
+          <ul id="cp-parallax-scene" style={{listStyle:"none",padding:0,margin:0,position:"relative",width:"100%",height:"100%"}}>
+            {[
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-01-01_cleaned.svg",depth:"0.05",opacity:0.9},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-11_cleaned.svg",depth:"0.10",opacity:0.8},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-10_cleaned.svg",depth:"0.10",opacity:1},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-09_cleaned.svg",depth:"0.10",opacity:1},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-04_cleaned.svg",depth:"0.05",opacity:0.8},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-03_cleaned.svg",depth:"0.05",opacity:0.8},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-02_cleaned.svg",depth:"0.05",opacity:0.8},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-06_cleaned.svg",depth:"0.15",opacity:1},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-05_cleaned.svg",depth:"0.15",opacity:1},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-08_cleaned.svg",depth:"0.15",opacity:1},
+              {src:"https://s3-us-west-2.amazonaws.com/s.cdpn.io/73058/manHuntDown005-1-psd-07_cleaned.svg",depth:"0.15",opacity:1},
+            ].map((layer,i)=>(
+              <li key={i} data-depth={layer.depth} style={{position:"absolute",inset:0,listStyle:"none",opacity:layer.opacity}}>
+                <img src={layer.src} style={{display:"block",minWidth:"100%",minHeight:"100%",objectFit:"cover",filter:"hue-rotate(180deg) sepia(0.4) saturate(1.5) brightness(0.65)"}}/>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className={styles.hero} style={{position:"relative",zIndex:2}}>
           <div className={styles.badge}>// REGISTRATION OPEN &nbsp; ?</div>
           <HologramTitle/>
           <p className={styles.year}>2026</p>
@@ -217,8 +258,8 @@ export default function SymbiHackathon() {
             <CyberpunkFlipClock targetDate="2026-04-24T00:00:00+05:30"/>
 
           </div>
-          <button className={styles.registerBtn} onClick={()=>window.open("https://devfolio.co","_blank")}>
-            &gt;_ REGISTER ON DEVFOLIO
+          <button className={`${styles.registerBtn} ${styles.glitchBtn}`} data-text=">_ REGISTER ON DEVFOLIO" onClick={()=>window.open("https://devfolio.co","_blank")}>
+            REGISTER NOW
           </button>
         </div>
         <HackathonNav/>
@@ -232,3 +273,12 @@ export default function SymbiHackathon() {
     </>
   );
 }
+
+
+
+
+
+
+
+
+
