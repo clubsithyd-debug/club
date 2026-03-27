@@ -427,3 +427,84 @@
 .badge, .title, .year, .desc, .pills, .stats, .timerWrap, .registerBtn {
   text-shadow: 0 2px 12px rgba(0,0,0,0.95);
 }
+
+/* -- MOBILE RESPONSIVE -- */
+@media (max-width: 768px) {
+  .wrap { padding-top: 60px; }
+
+  .hero { padding: 60px 16px 32px; min-height: auto; }
+
+  .title { font-size: clamp(42px, 14vw, 80px) !important; }
+
+  .year { font-size: clamp(22px, 7vw, 40px); }
+
+  .desc { font-size: 13px; max-width: 100%; }
+
+  .pills { gap: 8px; }
+
+  .badge { font-size: 9px; letter-spacing: 0.2em; padding: 5px 12px; }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+  }
+
+  .timerWrap {
+    flex-wrap: wrap;
+    gap: 8px !important;
+    padding: 0 16px !important;
+  }
+
+  .timerBox {
+    min-width: 60px !important;
+    padding: 8px !important;
+  }
+
+  .timerDigit { font-size: clamp(28px, 10vw, 56px) !important; }
+
+  .timerLabel { font-size: 8px !important; }
+
+  .registerBtn {
+    width: 100% !important;
+    font-size: 16px !important;
+    padding: 14px 24px !important;
+  }
+
+  .navBar {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    padding: 8px !important;
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .navBtn {
+    font-size: 9px !important;
+    padding: 8px 10px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sectionWrap {
+    padding: 32px 16px !important;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .card {
+    padding: 16px !important;
+  }
+
+  .muteBtn { bottom: 16px !important; left: 16px !important; }
+}
+
+@media (max-width: 480px) {
+  .title { font-size: clamp(36px, 16vw, 64px) !important; }
+  .statsGrid { grid-template-columns: 1fr !important; }
+  .timerDigit { font-size: clamp(24px, 12vw, 48px) !important; }
+}
