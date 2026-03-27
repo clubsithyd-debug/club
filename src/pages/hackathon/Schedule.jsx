@@ -128,7 +128,7 @@ export default function Schedule() {
             <p style={{ fontFamily:'"Barlow Condensed",sans-serif', fontSize:"16px", color:C.dim, lineHeight:1.7, maxWidth:"500px", borderLeft:`2px solid rgba(255,233,0,0.15)`, paddingLeft:"14px" }}>
               48 hours. 3 phases. Every block mapped like a tactical ops board. Know where to be and when.
             </p>
-            <div style={{ display:"flex", gap:"1px", background:"rgba(255,233,0,0.06)", marginLeft:"auto" }}>
+            <div style={{ display:"flex", gap:"1px", background:"rgba(255,233,0,0.06)", marginLeft:"auto", flexWrap:"wrap" }}>
               {[["// DAYS","3"],["// HOURS","48"],["// EVENTS", scheduleData.reduce((a,d)=>a+d.events.length,0)+""]].map(([label,val])=>(
                 <div key={label} style={{ padding:"16px 24px", background:C.card, borderTop:`3px solid ${label.includes("DAYS")?C.yellow:label.includes("HOURS")?C.red:C.chrome}`, textAlign:"center", minWidth:"90px" }}>
                   <div style={{ fontSize:"9px", letterSpacing:"0.2em", color:C.dim, marginBottom:"6px" }}>{label}</div>
@@ -140,17 +140,17 @@ export default function Schedule() {
         </motion.div>
 
         {/* -- DAY SELECTOR TABS -- */}
-        <div style={{ display:"flex", gap:"1px", background:"rgba(255,233,0,0.06)", marginBottom:"32px", overflowX:"auto" }}>
+        <div style={{ display:"flex", gap:"1px", background:"rgba(255,233,0,0.06)", marginBottom:"32px", overflowX:"auto", WebkitOverflowScrolling:"touch", scrollbarWidth:"none", msOverflowStyle:"none" }}>
           <div
             onClick={()=>{setActiveDay(null);setTimeout(playShock,50);}}
-            style={{ padding:"12px 24px", background: activeDay===null ? C.yellow : C.card, color: activeDay===null ? C.bg : C.dim, fontFamily:'"Bebas Neue",cursive', fontSize:"15px", letterSpacing:"0.15em", cursor:"crosshair", whiteSpace:"nowrap", borderTop: activeDay===null ? `3px solid ${C.yellow}` : `3px solid transparent`, transition:"all 0.15s", boxShadow: activeDay===null ? `0 0 16px rgba(255,233,0,0.3)` : "none" }}
+            style={{ padding:"12px 24px", background: activeDay===null ? C.yellow : C.card, color: activeDay===null ? C.bg : C.dim, fontFamily:'"Bebas Neue",cursive', fontSize:"15px", letterSpacing:"0.15em", cursor:"crosshair", whiteSpace:"nowrap", flexShrink:0, borderTop: activeDay===null ? `3px solid ${C.yellow}` : `3px solid transparent`, transition:"all 0.15s", boxShadow: activeDay===null ? `0 0 16px rgba(255,233,0,0.3)` : "none" }}
           >
             ALL PHASES
           </div>
           {scheduleData.map((day,i)=>(
             <div key={day.day}
               onClick={()=>{setActiveDay(activeDay===i?null:i);setTimeout(playShock,50);}}
-              style={{ padding:"12px 24px", background: activeDay===i ? PHASE_COLORS[i] : C.card, color: activeDay===i ? C.bg : C.dimLt, fontFamily:'"Bebas Neue",cursive', fontSize:"15px", letterSpacing:"0.15em", cursor:"crosshair", whiteSpace:"nowrap", borderTop: activeDay===i ? `3px solid ${PHASE_COLORS[i]}` : "3px solid transparent", transition:"all 0.15s", boxShadow: activeDay===i ? `0 0 16px rgba(255,233,0,0.2)` : "none" }}
+              style={{ padding:"12px 24px", background: activeDay===i ? PHASE_COLORS[i] : C.card, color: activeDay===i ? C.bg : C.dimLt, fontFamily:'"Bebas Neue",cursive', fontSize:"15px", letterSpacing:"0.15em", cursor:"crosshair", whiteSpace:"nowrap", flexShrink:0, borderTop: activeDay===i ? `3px solid ${PHASE_COLORS[i]}` : "3px solid transparent", transition:"all 0.15s", boxShadow: activeDay===i ? `0 0 16px rgba(255,233,0,0.2)` : "none" }}
             >
               {PHASE_LABELS[i]} — {day.date}
             </div>
@@ -158,7 +158,7 @@ export default function Schedule() {
         </div>
 
         {/* -- MAIN GRID -- */}
-        <div style={{ display:"grid", gridTemplateColumns: activeDay!==null ? "1fr" : "repeat(auto-fit,minmax(300px,1fr))", gap:"1px", background:"rgba(255,233,0,0.06)" }}>
+        <div style={{ display:"grid", gridTemplateColumns: activeDay!==null ? "1fr" : "repeat(auto-fit,minmax(min(300px,100%),1fr))", gap:"1px", background:"rgba(255,233,0,0.06)" }}>
           {scheduleData.map((day,di)=>{
             if(activeDay!==null && activeDay!==di) return null;
             const col = PHASE_COLORS[di];

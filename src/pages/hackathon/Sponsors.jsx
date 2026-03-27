@@ -289,8 +289,8 @@ function SponsorFrame({ sponsor }) {
             position:"relative",
             flexShrink:0,
             /* BIGGER SIZE */
-            width:"clamp(220px,22vw,290px)",
-            height:"clamp(160px,16vw,210px)",
+            width:"clamp(160px,42vw,290px)",
+            height:"clamp(120px,30vw,210px)",
             background:C.card,
             clipPath:"polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))",
             border:`1px solid ${hov ? tc+"90" : tc+"22"}`,
@@ -591,7 +591,7 @@ export default function Sponsors() {
                 <SectionLabel text="WHY SPONSOR" color={C.red} right/>
                 <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.red}70,transparent)`,marginLeft:2}}/>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:3}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(240px,100%),1fr))",gap:3}}>
                 {WHY.map((item,i) => (
                     <motion.div key={item.title}
                                 initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{duration:.4,delay:.4+i*.07}}
@@ -620,7 +620,7 @@ export default function Sponsors() {
                 <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.yellow}50,transparent)`,marginLeft:2}}/>
               </div>
 
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:3,alignItems:"start"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(280px,100%),1fr))",gap:3,alignItems:"start"}}>
                 {/* FORM */}
                 <div style={{background:C.card,border:`1px solid rgba(255,233,0,0.1)`,padding:"28px 24px",clipPath:"polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)"}}>
                   {sent ? (

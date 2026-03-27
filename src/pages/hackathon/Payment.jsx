@@ -310,7 +310,7 @@ export default function Payment() {
               <div style={{padding:"7px 20px",background:C.yellow,color:C.bg,fontFamily:'"Bebas Neue",cursive',fontSize:15,letterSpacing:".22em",clipPath:"polygon(0 0,calc(100% - 10px) 0,100% 100%,0 100%)"}}>MISSION SEQUENCE</div>
               <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.yellow}80,transparent)`,marginLeft:2}}/>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:3}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(260px,100%),1fr))",gap:3}}>
               {STEPS.map((s,i)=>(
                 <motion.div key={s.num} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:.1+i*.1}}>
                   <StepCard {...s}/>
@@ -328,7 +328,7 @@ export default function Payment() {
               <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.red}80,transparent)`,marginLeft:2}}/>
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:3,alignItems:"start"}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(300px,100%),1fr))",gap:3,alignItems:"start"}}>
 
               {/* LEFT — UPI + BANK */}
               <div style={{background:C.card,border:`1px solid rgba(255,233,0,0.1)`,borderTop:`3px solid ${C.yellow}`,padding:"28px 24px",clipPath:"polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)"}}>
@@ -406,7 +406,7 @@ export default function Payment() {
               <span style={{fontFamily:'"Share Tech Mono",monospace',fontSize:8,color:C.dim,letterSpacing:".2em"}}>{checks.filter(Boolean).length}/{checks.length} COMPLETE</span>
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:3}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(300px,100%),1fr))",gap:3}}>
               {/* CHECKLIST */}
               <div style={{background:C.card,border:`1px solid rgba(255,233,0,0.08)`,padding:"24px",clipPath:"polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)"}}>
                 <div style={{fontFamily:'"Share Tech Mono",monospace',fontSize:8,letterSpacing:".28em",color:C.dim,marginBottom:16}}>// CLICK TO CHECK OFF</div>
@@ -453,7 +453,7 @@ export default function Payment() {
         {/* ══ BOTTOM CTA ══ */}
         <div style={{padding:"0 clamp(16px,5vw,60px) 60px"}}>
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:.5}}
-            style={{background:`linear-gradient(135deg,rgba(255,233,0,0.04),rgba(255,0,60,0.02))`,border:`1px solid rgba(255,233,0,0.12)`,borderTop:`3px solid ${C.yellow}`,padding:"36px 40px",clipPath:"polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,0 100%)",display:"flex",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:24}}>
+            style={{background:`linear-gradient(135deg,rgba(255,233,0,0.04),rgba(255,0,60,0.02))`,border:`1px solid rgba(255,233,0,0.12)`,borderTop:`3px solid ${C.yellow}`,padding:"36px clamp(16px,5vw,40px)",clipPath:"polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,0 100%)",display:"flex",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:24}}>
             <div>
               <div style={{fontFamily:'"Share Tech Mono",monospace',fontSize:8,letterSpacing:".28em",color:C.dim,marginBottom:8}}>// READY TO LOCK IN?</div>
               <div style={{fontFamily:'"Bebas Neue",cursive',fontSize:"clamp(24px,4vw,42px)",color:C.yellow,letterSpacing:".06em",lineHeight:1}}>REGISTER. PAY. BUILD.</div>

@@ -61,3 +61,14 @@
 }
 
 
+
+@media (max-width: 768px) {
+  .navLabel { display: none; }
+  .navItem { padding: 12px 14px; gap: 0; }
+  .navItemActive { clip-path: polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%); }
+  .navBar { justify-content: space-between; width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .navItem { padding: 10px 10px; }
+}

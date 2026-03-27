@@ -482,7 +482,7 @@ function MemberCard({ member, index, accent, isSlate = false }) {
 /* ── SIDE TABS ── */
 function UnitTabs({ teams, active, onChange }) {
   return (
-      <div style={{display:"flex",flexDirection:"column",gap:2,width:"clamp(120px,18vw,180px)",flexShrink:0}}>
+      <div style={{display:"flex",flexDirection:"column",gap:2,width:"clamp(120px,18vw,180px)", minWidth:"100px", flexShrink:0}}>
         {teams.map(({ label, color }, i) => {
           const isActive = active === i;
           return (
@@ -593,10 +593,10 @@ export default function Committee() {
               <div style={{padding:"7px 20px",background:C.red,color:"#fff",fontFamily:'"Bebas Neue",cursive',fontSize:15,letterSpacing:".22em",clipPath:"polygon(0 0,calc(100% - 10px) 0,100% 100%,0 100%)"}}>FIELD UNITS</div>
               <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.red}90,transparent)`,marginLeft:2}}/>
             </div>
-            <div style={{display:"flex",gap:3,alignItems:"flex-start"}}>
+            <div style={{display:"flex",gap:3,alignItems:"flex-start",flexWrap:"wrap"}}>
               <UnitTabs teams={teams.map(t=>({label:t.team,color:t.color}))} active={activeUnit} onChange={setActiveUnit}/>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{padding:"16px 24px",background:`linear-gradient(90deg,${current.color}14,${C.card})`,borderLeft:`4px solid ${current.color}`,borderBottom:`1px solid rgba(255,233,0,.05)`,display:"flex",alignItems:"center",gap:16,marginBottom:3}}>
+                <div style={{padding:"16px 24px",background:`linear-gradient(90deg,${current.color}14,${C.card})`,borderLeft:`4px solid ${current.color}`,borderBottom:`1px solid rgba(255,233,0,.05)`,display:"flex",alignItems:"center",gap:16,marginBottom:3,flexWrap:"wrap"}}>
                   <div style={{width:12,height:12,background:current.color,clipPath:"polygon(50% 0%,100% 50%,50% 100%,0% 50%)",boxShadow:`0 0 18px ${current.color}`,flexShrink:0,animation:"cpStatPulse 2s ease-in-out infinite"}}/>
                   <div>
                     <div style={{fontFamily:'"Share Tech Mono",monospace',fontSize:8,letterSpacing:".28em",color:C.dim,marginBottom:3}}>UNIT-{String(activeUnit+1).padStart(2,"0")} · ACTIVE</div>

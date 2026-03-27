@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 
 export default function CyberpunkFlipClock({ targetDate }) {
   const [t, setT] = useState({days:0,hours:0,minutes:0,seconds:0});
@@ -36,14 +36,14 @@ export default function CyberpunkFlipClock({ targetDate }) {
     const opp = red ? "#FFE900" : "#FF003C";
     return (
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-        <div style={{background:"#0D0B07",border:`1px solid rgba(255,233,0,0.2)`,borderTop:`3px solid ${col}`,padding:"16px 24px",minWidth:100,textAlign:"center",position:"relative",boxShadow:`0 0 24px rgba(${red?"255,0,60":"255,233,0"},0.08)`}}>
+        <div style={{background:"#0D0B07",border:`1px solid rgba(255,233,0,0.2)`,borderTop:`3px solid ${col}`,padding:"clamp(8px,2vw,16px) clamp(10px,2.5vw,24px)",minWidth:"clamp(60px,14vw,100px)",textAlign:"center",position:"relative",boxShadow:`0 0 24px rgba(${red?"255,0,60":"255,233,0"},0.08)`}}>
           <div style={{position:"absolute",top:4,left:4,width:10,height:10,borderTop:`1px solid ${col}`,borderLeft:`1px solid ${col}`}}/>
           <div style={{position:"absolute",bottom:4,right:4,width:10,height:10,borderBottom:`1px solid ${col}`,borderRight:`1px solid ${col}`}}/>
           <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px)",pointerEvents:"none"}}/>
           <div style={{position:"absolute",left:0,right:0,top:"50%",height:1,background:"rgba(255,233,0,0.1)",transform:"translateY(-50%)"}}/>
           <span style={{
             fontFamily:'"Bebas Neue",cursive',
-            fontSize:"clamp(52px,8vw,90px)",
+            fontSize:"clamp(32px,9vw,90px)",
             lineHeight:1,color:col,
             textShadow:`0 0 30px rgba(${red?"255,0,60":"255,233,0"},0.5),3px 3px 0 ${opp}`,
             position:"relative",zIndex:2,display:"inline-block",
@@ -68,7 +68,7 @@ export default function CyberpunkFlipClock({ targetDate }) {
 
   return (
     <div style={{display:"flex",justifyContent:"center",width:"100%",marginBottom:28}}>
-      <div style={{display:"inline-flex",alignItems:"flex-start",gap:"clamp(6px,1.5vw,16px)",padding:"clamp(16px,2vw,28px)",background:"#060604",border:"1px solid rgba(255,233,0,0.12)",position:"relative"}}>
+      <div style={{display:"inline-flex",alignItems:"flex-start",gap:"clamp(4px,1.2vw,16px)",padding:"clamp(10px,2vw,28px)",flexWrap:"wrap",justifyContent:"center",background:"#060604",border:"1px solid rgba(255,233,0,0.12)",position:"relative"}}>
         <div style={{position:"absolute",top:5,left:5,width:14,height:14,borderTop:"2px solid #FFE900",borderLeft:"2px solid #FFE900"}}/>
         <div style={{position:"absolute",bottom:5,right:5,width:14,height:14,borderBottom:"2px solid #FF003C",borderRight:"2px solid #FF003C"}}/>
         <div style={{position:"absolute",top:-1,right:16,fontFamily:'"Share Tech Mono",monospace',fontSize:7,letterSpacing:".3em",color:"#3A3224",background:"#060604",padding:"0 8px"}}>// COUNTDOWN</div>

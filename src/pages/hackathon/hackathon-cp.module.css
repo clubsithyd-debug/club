@@ -127,3 +127,11 @@
     font-size: 14px !important;
   }
 }
+
+/* -- Mid-range phones -- */
+@media (max-width: 430px) {
+  .cpPage { overflow-x: hidden; }
+  .cpPage h1 { font-size: clamp(28px, 9vw, 56px) !important; }
+  .cpPage h2 { font-size: clamp(20px, 7vw, 40px) !important; }
+  .cpPage button { width: 100% !important; }
+}
